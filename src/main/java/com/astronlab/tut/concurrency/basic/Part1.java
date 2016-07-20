@@ -1,17 +1,30 @@
 package com.astronlab.tut.concurrency.basic;
 
 /*
+Study instructions.
+============================
+1.In java files:
+ =======> means Main section/title
+ -------> means sub section
+
+2. Before reading a file press (in IDEA ide): ctrl+shift+num_minus to collapse code sections for better reading
+
+3. After reading the initial texts in java files, just run(green play UI button @left side) the related program/code to see
+it in action and related outputs then start reading the code afterwards. This will make the code easier to understand.
+
+
+
 Introductions
 ======================
-  Java included high-level concurrency APIs from JDK 5.0
+  * Java included high-level concurrency APIs from JDK 5.0
 
  Concurrency Models:
 -------------------------
-	These following models are adhered in various software systems. Just to let us their names -
+	These following models are adhered in various software systems. Just to let us acquainted with their names -
 
 	1. Threaded model (Used in JAVA)
 	2. Reactive & Event Driven Systems
-	3. Actors & Channels
+	3. Fibers, Actors & Channels
 
 Concurrency Vs Parallelism
 ------------------------------

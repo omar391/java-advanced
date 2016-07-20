@@ -2,8 +2,7 @@ package com.astronlab.tut.concurrency.basic;
 
 /*
 Java memory to cpu communication
-==================================
-Ref: http://tutorials.jenkov.com/java-concurrency/java-memory-model.html
+=====================================
 
  Memory structure inside jvm:
  -----------------------------
@@ -12,7 +11,7 @@ Ref: http://tutorials.jenkov.com/java-concurrency/java-memory-model.html
  1. Thread's stack/space <store "only  method's" local primitive variables and reference of heap objects> : Each thread contains its own version of same local variable
  2. Heap space <store actual objects, static class/objects> : This space is shared between threads
 
- i.e: jvm[thread_stack[int, char, byte, etc],  heap[class obj, enum]]
+ i.e: jvm[ thread_stack[int, char, byte, etc],  heap[class_obj, enum] ]
 
  Memory to CPU communication flow:
  ---------------------------------
@@ -20,21 +19,24 @@ Ref: http://tutorials.jenkov.com/java-concurrency/java-memory-model.html
 
  Different hardware memory storage-size comparison:
  --------------------------------------------------
-	main_memory > cpu_cache > cpu_register
+	main_memory size > cpu_cache size > cpu_register size
 
  Communication example:
  ----------------------
- count = count + 1
+ count = count + 1 // OR count++;
 
- 1. Read count's value from main memory to cpu_cache
+ 1. Read count's value from main_memory to cpu_cache
  2 From cpu_cache to cpu_register
- 3. Add 1 value to count in resister
+ 3. Add 1 value to count variable in resister
  4. Store value from register to cpu cache
  5. Store value from cpu_cache to main_memory
 
+* If things are not clear then check the ref bellow / Ask me
+Ref: http://tutorials.jenkov.com/java-concurrency/java-memory-model.html
+
  The problem:
  --------------
- Execution times of steps 1 or 5 are not guaranteed.
+ Exact execution times of steps 1 or 5 are not guaranteed.
  Read-write from/to cpu_cache<-->main_memory can happen immediately or sometime later.
  Hence, threads might not see each other's changes immediately. This is called visibility problem.
 
@@ -49,9 +51,11 @@ Syntax: public volatile int counter = 0;
 
 Notes:
 ------
-1. Volatile variable doesn't prevent harmful race conditions.
+1. Volatile variable doesn't prevent harmful race conditions. Because volatile merely make changes visible
+to threads but it doesn't cause them to access shared variable sequentially (Remember: count=5; count++; problem)
+
 Example: Try changing CriticalSection's "int count = 0" into "volatile int count = 0" in class Part3 then run the class.
-It will detect critical race conditions.
+It will detect critical harmful race conditions!
 
 2. When a thread writes to a volatile variable, then not just the volatile variable itself is written to main memory.
 Also all other variables changed by the thread before writing to the volatile variable are also flushed to main memory.
@@ -63,10 +67,10 @@ main memory together with the volatile variable.
 
 
 ThreadLocal class
-===================
+======================
 The ThreadLocal class in Java enables you to create variables that can only be read and written by the same thread.
-Thus, even if two threads are executing the code, and the code has a reference to a ThreadLocal variable,
-then the two threads cannot see each other's ThreadLocal variables.
+Thus, even if two threads are executing the codes with shared reference to a ThreadLocal variable,
+then the two threads can not see the value of each other's ThreadLocal variables.
 
 Syntax: private ThreadLocal myThreadLocal = new ThreadLocal();
  */

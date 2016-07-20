@@ -230,7 +230,7 @@ class FairnessDemo {
 	}
 
 	private static JFrame createFrame () {
-		JFrame frame = new JFrame("Starvation Demo");
+		JFrame frame = new JFrame("Fairness Demo");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(new Dimension(300, 200));
 		return frame;
