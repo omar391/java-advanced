@@ -26,7 +26,7 @@ Introductions
 	2. Reactive & Event Driven Systems
 	3. Fibers, Actors & Channels
 
-Concurrency Vs Parallelism
+Concurrency vs. Parallelism
 ------------------------------
 	Concurrency means that an application is making progress on more than one task at the same time (concurrently).
 	Parallelism on the other hand, is related to how an application handles each individual task. An application may process the task serially from start to end, or split the task up into subtasks which can be completed in parallel.
@@ -37,8 +37,14 @@ Concurrency Vs Parallelism
 	Additionally, an application can be neither concurrent nor parallel. This means that it works on only one task at a time, and the task is never broken down into subtasks for parallel execution.
 	Finally, an application can also be both concurrent and parallel, in that it both works on multiple tasks at the cognate time, and also breaks each task down into subtasks for parallel execution.
 
-  Multithreading Costs
------------------------
+Process vs. threads
+---------------------------
+	A process runs independently and isolated of other processes. It cannot directly access shared data in other processes. The resources of the process, e.g. memory and CPU time, are allocated to it via the operating system.
+	A thread is a so called lightweight process. It has its own call stack, but can access shared data of other threads in the cognate process. Every thread has its own memory cache. If a thread reads shared data it stores this data in its own memory cache. A thread can re-read the shared data.
+	A Java application runs by default in one process. Within a Java application you work with several threads to achieve parallel processing or asynchronous behavior.
+
+Multithreading Costs
+--------------------------
  -More complex design
   :: Code executed by multiple threads accessing shared data need special attention
  -Context Switching Overhead
