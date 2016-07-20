@@ -2,6 +2,7 @@ package com.astronlab.tut.concurrency.intermediate;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -31,6 +32,7 @@ Thread's Deadlock example and prevention
 
  Checkout our DeadlockPrevention class bellow.
 
+
  Starvation and Fairness
  =================================
  If a thread is not granted CPU time because other threads grab it all, it is called "starvation".
@@ -46,10 +48,10 @@ Thread's Deadlock example and prevention
  Implementing fairness
  ----------------------
  Starvation is controlled by System's thread schedulers. So it is not possible to implement 100% fairness. But we can increase
- fairness.
- Ref: http://www.logicbig.com/tutorials/core-java-tutorial/java-multi-threading/thread-starvation/
+ fairness by using inbuilt ReentrantLock class.
 
- Custom fairness is not of absolute necessity as System handles it.
+ Checkout FairnessDemo class and run it!! We are done!
+
  */
 
 class DeadlockExample {
@@ -146,6 +148,69 @@ class DeadlockPrevention {
 	}
 }
 
+class StarvationDemo {
+	private static Object sharedObject = new Object();
+
+
+	public static void main (String[] args) {
+		JFrame frame = createFrame();
+		frame.setLayout(new FlowLayout(FlowLayout.LEFT));
+
+		for (int i = 0; i < 5; i++) {
+			ProgressThread progressThread = new ProgressThread();
+			frame.add(progressThread.getProgressComponent());
+			progressThread.start();
+		}
+
+		frame.setLocationRelativeTo(null);
+		frame.setVisible(true);
+	}
+
+	private static JFrame createFrame () {
+		JFrame frame = new JFrame("Starvation Demo");
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setSize(new Dimension(300, 200));
+		return frame;
+	}
+
+	private static class ProgressThread extends Thread {
+		JProgressBar progressBar;
+
+		ProgressThread () {
+			progressBar = new JProgressBar();
+			progressBar.setString(this.getName());
+			progressBar.setStringPainted(true);
+		}
+
+		JComponent getProgressComponent () {
+			return progressBar;
+		}
+
+		@Override
+		public void run () {
+
+			int c = 0;
+			while (true) {
+				//We are using a reentrantLock rather than Synchronized block to ensure fairness
+				synchronized (sharedObject) {
+
+					if (c == 100) {
+						break;
+					}
+					progressBar.setValue(++c);
+					try {
+						//sleep the thread to simulate long running task
+						Thread.sleep(10);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+
+				}
+			}
+		}
+	}
+}
+
 class FairnessDemo {
 	private static ReentrantLock reentrantLock = new ReentrantLock(true);
 
@@ -209,5 +274,5 @@ class FairnessDemo {
 	}
 }
 
-public class Part5 {
+public class Part6 {
 }
