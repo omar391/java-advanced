@@ -145,7 +145,7 @@ public class Part5 {
 
 	public static void main(String[] args) {
 		Part5 p4 = new Part5();
-		RunnableA runnableA = p4.new RunnableA();
+		RunnableA runnableA = p4.new RunnableA();  //instance of child class(RunnableA) is called via parent's instance
 
 		Thread threadA = new Thread(runnableA);
 		Thread threadB = new Thread(p4.new RunnableB(runnableA));
@@ -166,6 +166,9 @@ public class Part5 {
 		private void task1(){
 			System.out.println("Task 1 started");
 			for (int i = 0; i < 5000; i++) {
+				if(i==4997){
+					System.out.println(i);
+				}
 				count++;
 			}
 			waitNotifier.doNotify();
@@ -173,7 +176,7 @@ public class Part5 {
 
 		private void task2(){
 			System.out.println("Task 2 started");
-			for (int i = 0; i < 50000; i++) {
+			for (int i = 0; i < 100000; i++) {
 				count++;
 			}
 		}
