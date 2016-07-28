@@ -26,11 +26,40 @@ Java threading model introduce some problem domain, such as -
  "synchronized" keyword. It could only be applied on methods or a code block but not on any variable.
  i.e.
 
- public synchronized void doX(){..}
- --OR--
- synchronized(this){
-  //...
+ public synchronized void doX(){
+	 count = 0;
+	 count++;
  }
+
+ ----Is equivalent to following one----
+
+ public void doX(){
+  synchronized(this){
+	  count = 0;
+	  count++;
+  }
+ }
+	-------- OR equivalent ----------
+
+ public void doX(){
+ Object myObject = new Object();
+ synchronized(myObject){
+    count = 0;
+    count++;
+  }
+ }
+
+
+ Here, "this/myObject" is called a Monitor object. In a synchronized method, default Monitor is "this"/current_instance.
+ With a monitor object we create a lock state for that object so that only one thread could pass that synchronize
+ method/block at a time.
+
+ Note:
+ --------
+ - In JVM, "every object" and "class" are logically associated with a monitor.
+ - For objects, the associated monitor protects data locked on the object's instance variables. ie. Any object's instance
+ - For classes,the monitor protects data locked on the class's class variables. ie. String.class
+
 
  Now run both NonSynchronizationDemo and SynchronizationDemo. NonSynchronizationDemo has mixed order of printing!
  While SynchronizationDemo prints complete block together from each thread, in other words it just executes thread's
@@ -41,6 +70,62 @@ Java threading model introduce some problem domain, such as -
  - Synchronization "does not" execute the task orderly.
  - It sometime prints thread-1 before thread-0 and other time reversely. Run it multiple times to see the difference!
  - It just let synchronized blocks to be accessed by one thread at a time.
+
+
+ Thread synchronization vs monitor vs lock (Important basic)
+ ============================================================
+
+ Monitor:
+ ---------------
+ Monitor is a generic (common in various language) concept in multi-threading scenarios. In Java, for example -
+
+ Object myObject = new Object();
+ synchronized(myObject){
+  count = 0;
+  count++;
+ }
+
+ Here "myObject" is a "Monitor object" which handles Synchronization. And
+ {
+ count = 0;
+ count++;
+ } is called a "monitor region".
+
+ So a Monitor = monitor object + monitor region.
+
+
+ Lock:
+ -----------------
+ A lock is a
+ - flag/status/state of a monitor object
+ - "hidden code block inside JVM" that cause the lock state.
+
+ Suppose, in practical term, we are said: "Lock that door with a lock". So what is a lock?
+ => Ans: Above, a lock refers to a hard object and it also refers to a bound state of a door
+
+ Similarly, In threading -
+
+ A lock is a flag/status/state done by a code block(hidden, we will know more, later) of the respective monitor object(above, the door).
+
+ Here, in "synchronized(myObject){..}", when the code enters the monitor region then we could say - "monitor object is now locked".
+
+ So finally, a synchronization mechanism is done by a lock(hidden code block) which makes a "lock" flag/status
+ on a monitor object covering the monitor region so that only one thread could pass the monitor region at a time.
+
+ Synchronization:
+ -------------------
+ Java's monitor supports two kinds of thread synchronization:
+ 1. Mutual exclusion : done via object lock
+ 2. Cooperation : done via wait/notify (we'll learn later in Part5-Part6)
+
+ Mutual exclusion
+ -----------------
+ It is supported in the Java virtual machine via object locks, enables multiple threads to independently work on
+ shared data without interfering with each other.
+
+ Cooperation
+ ------------
+ In the Java virtual machine via the wait and notify methods of class Object, enables threads to work together towards a common goal.
 
  */
 
@@ -84,7 +169,7 @@ class SynchronizationDemo{
 		Thread threadA = new Thread(printerRunnable);
 		Thread threadB = new Thread(printerRunnable);
 
-		//Start thread
+		//Start threads
 		threadA.start();
 		threadB.start();
 	}

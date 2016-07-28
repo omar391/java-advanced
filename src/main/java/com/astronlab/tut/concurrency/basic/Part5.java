@@ -36,6 +36,7 @@ package com.astronlab.tut.concurrency.basic;
  1. If we somehow call doNotify()/notify() before we call doWait/wait() then the waiting thread will always be
     in waiting state unless another notify call is executed. This is called "missed signal" problem. This issue is solved
     in WaitNotifierTwo class.
+
  2. Sometimes a waiting thread is get waked up without notify() method being called. This is a natural JVM phenomenon.
     Its called "Spurious Wake ups". This issue is handled in WaitNotifierThree class.
 
@@ -166,9 +167,6 @@ public class Part5 {
 		private void task1(){
 			System.out.println("Task 1 started");
 			for (int i = 0; i < 5000; i++) {
-				if(i==4997){
-					System.out.println(i);
-				}
 				count++;
 			}
 			waitNotifier.doNotify();

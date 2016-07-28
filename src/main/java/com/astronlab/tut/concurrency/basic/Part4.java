@@ -24,10 +24,10 @@ Java memory to cpu communication
  Communication example:
  ----------------------
  count = count + 1 // OR count++;
-resister
+
  1. Read count's value from main_memory to cpu_cache
  2 From cpu_cache to cpu_register
- 3. Add 1 value to count variable in
+ 3. Add 1 value to count variable in resister
  4. Store value from register to cpu cache
  5. Store value from cpu_cache to main_memory
 

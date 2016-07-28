@@ -11,7 +11,7 @@ public class Questions {
 /*
 		1. Write a short note on differences among: Synchronization vs Atomic variable vs Volatile variable.
 
-		2. Based on Part3 and Part4, write an example class which proves, volatile variable doesn't prevent harmful race conditions.
+		2. Based on Part3 and Part4, write an example class which proves, volatile variable doesn't prove harmful race conditions.
 			 Hint: You could just copy the required code sections from Part3.
 
 		3. Write an example class demonstrating the use of ThreadLocal class (from Part4). Let Google help you. :)
