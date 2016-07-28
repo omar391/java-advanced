@@ -86,10 +86,10 @@ Java threading model introduce some problem domain, such as -
  }
 
  Here "myObject" is a "Monitor object" which handles Synchronization. And
- {
+ "{
  count = 0;
  count++;
- } is called a "monitor region".
+ }" is called a "monitor region".
 
  So a Monitor = monitor object + monitor region.
 
@@ -112,6 +112,7 @@ Java threading model introduce some problem domain, such as -
  So finally, a synchronization mechanism is done by a lock(hidden code block) which makes a "lock" flag/status
  on a monitor object covering the monitor region so that only one thread could pass the monitor region at a time.
 
+
  Synchronization:
  -------------------
  Java's monitor supports two kinds of thread synchronization:
@@ -126,6 +127,13 @@ Java threading model introduce some problem domain, such as -
  Cooperation
  ------------
  In the Java virtual machine via the wait and notify methods of class Object, enables threads to work together towards a common goal.
+
+
+ Note:
+ ------
+ In this tutorial we will sometimes use both lock and a monitor interchangeably to make things easier to understand.
+
+ i.e."a lock"==="a monitor object"
 
  */
 
