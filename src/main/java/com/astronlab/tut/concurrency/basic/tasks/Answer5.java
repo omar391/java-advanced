@@ -1,13 +1,38 @@
 package com.astronlab.tut.concurrency.basic.tasks;
 
 import java.util.Vector;
- 
+import java.util.concurrent.atomic.AtomicInteger;
+
 class Producer extends Thread {
-    WaitNotifier waitNotifier = new WaitNotifier();
- 
+    /**
+    * Here we need to use two wait-notifiers class because of 2 reasons-
+
+     1. Main reason
+     --------------
+    Suppose in getMessage() method -
+     Line_20: while (messages.size() == 0) {
+     Line_21:   waitNotifier.doWait();
+     Line_22: }
+     Sometimes, in-case we use a single waitNotifier, between line 20 and 21 there is tiny fraction of time distance and in the mean time
+     our producer reach its max msg limit(5) and go to wait state. At the same time Line-21 will also go to wait state. So this cause a
+     infinite lock state.
+
+     2. Design reason
+     -----------------
+     Here we have circular task dependency, ie. producer->consumer->producer. So, we actually have 2 tasks sets -
+     - producer -> consumer
+     - consumer -> producer
+    Hence, we need two waitNotifiers as described in Part5 class.
+
+    * */
+
+    WaitNotifier waitNotifierProducer = new WaitNotifier();
+    WaitNotifier waitNotifierConsumer = new WaitNotifier();
+
     static final int MAXQUEUE = 5;
+    AtomicInteger msgCount = new AtomicInteger(0);//Using atomic count for better vector size counting
     private Vector messages = new Vector();
- 
+
     @Override
     public void run() {
         try {
@@ -18,47 +43,42 @@ class Producer extends Thread {
         } catch (InterruptedException e) {
         }
     }
- 
-    private synchronized void putMessage() throws InterruptedException {
-        System.out.println("ppp");
-        waitNotifier.doNotify();
-        while (messages.size() == MAXQUEUE) {
-            waitNotifier.doWait();
+
+    private void putMessage() throws InterruptedException {
+        while (msgCount.get() == MAXQUEUE) {
+            waitNotifierProducer.doWait();//moving into waiting state
         }
         messages.addElement(new java.util.Date().toString());
         System.out.println("put message");
-        //waitNotifier.doNotify();
-        //Later, when the necessary event happens, the thread that is running it calls notify() from a block synchronized on the same object.
+        msgCount.incrementAndGet();
+        waitNotifierConsumer.doNotify();
     }
- 
+
     // Called by Consumer
-    public synchronized String getMessage() throws InterruptedException {
-        System.out.println("www");
-        waitNotifier.doNotify();
-        while (messages.size() == 0) {
-            waitNotifier.doWait();//By executing wait() from a synchronized block, a thread gives up its hold on the lock and goes to sleep.
+    public String getMessage() throws InterruptedException {
+        while (msgCount.get() == 0) {
+            waitNotifierConsumer.doWait();//moving into waiting state
         }
         String message = (String) messages.firstElement();
         messages.removeElement(message);
-        waitNotifier.doNotify();
+        msgCount.decrementAndGet();
+        waitNotifierProducer.doNotify();//a msg removed so, notify now
+
         return message;
     }
 }
- 
-class Consumer extends Thread {
 
+class Consumer extends Thread {
     Producer producer;
- 
+
     Consumer(Producer p) {
         producer = p;
     }
- 
+
     @Override
     public void run() {
-
         try {
             while (true) {
-                System.out.println("rrr");
                 String message = producer.getMessage();
                 System.out.println("Got message: " + message);
                 //sleep(200);
@@ -67,7 +87,7 @@ class Consumer extends Thread {
             e.printStackTrace();
         }
     }
- 
+
     public static void main(String args[]) {
         Producer producer = new Producer();
         producer.start();
@@ -85,10 +105,6 @@ class WaitNotifier {
             while(!resumeSignal){
                 try{
                     lockObject.wait();
-                    //If spurious wakeup happens then this following line will execute and return to while
-                    //condition check. If this was truly an non-intentional/spurious call then it will
-                    //find resumeSignal to be false and will return to waiting state again otherwise it will just
-                    //exit the waiting state. This solves our spurious wake up issue.
                 } catch(InterruptedException e){}
             }
 
