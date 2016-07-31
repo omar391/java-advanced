@@ -3,6 +3,14 @@ package com.astronlab.tut.concurrency.basic.tasks;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
+public class Answer5{
+    /**
+     Answer 1: Yes, their example2 will face missing-signal/spurious wake up problems.
+     Answer 2: See below.
+     * */
+}
+
+
 class Producer extends Thread {
     /**
     * Here we need to use two wait-notifiers class because of 2 reasons-

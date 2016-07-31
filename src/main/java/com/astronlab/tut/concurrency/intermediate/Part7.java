@@ -1,277 +1,307 @@
 package com.astronlab.tut.concurrency.intermediate;
 
-import javax.swing.*;
-import java.awt.*;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
-Thread's Deadlock example and prevention
-==========================================
- A deadlock is when two or more threads are waiting to obtain locks that some of the other threads
- in the deadlock are holding. The situation is illustrated below:
+*Builtin Lock class:
+=========================================
+ We know what lock1(also known as: intrinsic lock1) generally means(A state of monitor object to handle synchronization). But java also has built in"Lock"
+ interface and its implementations (ie.ReentrantLock class) to handle synchronization without using "synchronized" keyword.
+		i.e.
 
- Thread 1  locks with obj A, waits to hold another lock with obj B
- Thread 2  locks with obj B, waits to hold another lock with obj A
+public int inc(){
+	synchronized(this){
+		count++;
+	}
+}
 
- So Deadlock "might" occur when multiple threads hold(or try to hold) same locks set in reverse order.
- Checkout our DeadlockExample class.
+----is equivalent to-------
 
- Prevention
- ------------
- So what do you think how can we solve our little deadlock problem above? Well, its obvious that if we hadn't
- make locks in reverse order in both threads then it would be working just fine.
+Lock myLock = new MyLock(); //this is just a simple custom implementation (i.e:We will use built-in ReentrantLock class, described below)
+public int inc(){
+	myLock.lock1();
+  count++;
+	myLock.unlock();
+}
 
- And following actions can be taken to prevent probable deadlocks -
+ With a Lock class we are just mimicking the synchronize keywords's functionality via wait/notify along with some other extended features.
 
- 1. Lock order: We should try to use locks in threads in same order.
- 2. Lock Timeout: We shouldn't wait for a lock forever rather sleep it for a time.
-    If it doesn't come out of that lock yet then we need to release all hold locks and then retry it few  times later.
- 3. Lock Only What is Required: Lock only on lines which absolutely require locks. We don't need to lock complete block.
- 4. Avoid nested lock: If possible we should always avoid nested locks.
+ A sample Lock implementation is exampled in MyLock class. Check it out!! It uses wait/notify mechanisms and almost
+ resembles our previous WaitNotifierThree class.
 
- Checkout our DeadlockPrevention class bellow.
+*/
+class MyLock {
+	private boolean isLocked = false;
 
+	public synchronized void lock() throws InterruptedException {
+		while (isLocked) {
+			wait();
+		}
+		isLocked = true;
+	}
 
- Starvation and Fairness
- =================================
- If a thread is not granted CPU time because other threads grab it all, it is called "starvation".
+	public synchronized void unlock() {
+		isLocked = false;
+		notify();
+	}
+}
 
- Causes of Starvation in Java
- -----------------------------
- 1. Threads with high priority(we can set a thread's priority between 1 and 10) swallow all CPU time from threads with lower priority.
- 2. Threads are blocked indefinitely waiting to enter a synchronized block, because other threads are constantly allowed access before it.
- 3. Threads waiting on an object (called wait() on it) remain waiting indefinitely because other threads are constantly awakened instead of it.
+/**
+  Nested Monitor Lockout
+ =========================================
+  When we use locks/monitors in nested-ly, we need to be cautious. Consider following LockTest class-
 
- Checkout and run StarvationDemo class.
+ - In the lock1() method, "monitorObject.wait()" will release "monitorObject" lock1 but will continue to hold "this" lock1
+    till it could get out of wait state via monitorObject's notify from unlock() method.
 
- Implementing fairness
- ----------------------
- Starvation is controlled by System's thread schedulers. So it is not possible to implement 100% fairness. But we can increase
- fairness by using inbuilt ReentrantLock class.
+ -  Unlock() method's synchronised block will wait for "this" lock1 however, our lock1() method will already be locked with "this".
 
- Checkout FairnessDemo class and run it!! We are done!
-
+ So in above scenario, lock1() method will be stuck forever with "this" lock1. Hence, we should always use same lock1 for wait/notify,
+ and synchronization while trying to avoid nested locks if possible.
  */
 
-class DeadlockExample {
-		private static Object Lock1 = new Object();
-		private static Object Lock2 = new Object();
+class LockTest {
+	protected Object monitorObject = new Object();
+	protected boolean isLocked = false;
 
-		public static void main(String args[]) {
-
-			ThreadDemo1 T1 = new ThreadDemo1();
-			ThreadDemo2 T2 = new ThreadDemo2();
-			T1.start();
-			T2.start();
-		}
-
-		private static class ThreadDemo1 extends Thread {
-			public void run() {
-				synchronized (Lock1) {
-					System.out.println("Thread 1: Holding lock 1");
-
-					//With forced "Thread.sleep(10)" we are trying to simulate that thread is working on something for 10 milliseconds.
-					//This let us to demonstrate the deadlock scenario better.
-					try { Thread.sleep(10); }
-					catch (InterruptedException ignored) {}
-
-					System.out.println("Thread 1: Waiting for lock 2");
-					synchronized (Lock2) {
-						System.out.println("Thread 1: Holding lock 1 & 2");
-					}
+	public void lock() throws InterruptedException {
+		synchronized (this) {
+			while (isLocked) {
+				synchronized (monitorObject) {
+					monitorObject.wait();
 				}
 			}
-		}
-
-		private static class ThreadDemo2 extends Thread {
-			public void run() {
-				synchronized (Lock2) {
-					System.out.println("Thread 2: Holding lock 2");
-
-					try { Thread.sleep(10); }
-					catch (InterruptedException ignored) {}
-
-					System.out.println("Thread 2: Waiting for lock 1");
-					synchronized (Lock1) {
-						System.out.println("Thread 2: Holding lock 1 & 2");
-					}
-				}
-			}
+			isLocked = true;
 		}
 	}
 
-class DeadlockPrevention {
-	private static Object Lock1 = new Object();
-	private static Object Lock2 = new Object();
-
-	public static void main(String args[]) {
-
-		ThreadDemo1 T1 = new ThreadDemo1();
-		ThreadDemo2 T2 = new ThreadDemo2();
-		T1.start();
-		T2.start();
-	}
-
-	private static class ThreadDemo1 extends Thread {
-		public void run() {
-			synchronized (Lock1) {
-				System.out.println("Thread 1: Holding lock 1");
-
-				try { Thread.sleep(10); }
-				catch (InterruptedException ignored) {}
-
-				System.out.println("Thread 1: Waiting for lock 2");
-				synchronized (Lock2) {
-					System.out.println("Thread 1: Holding lock 1 & 2");
-				}
-			}
-		}
-	}
-
-	private static class ThreadDemo2 extends Thread {
-		public void run() {
-
-			//just locks orders are changed, it works now!
-			synchronized (Lock1) {
-				System.out.println("Thread 2: Holding lock 2");
-
-				try { Thread.sleep(10); }
-				catch (InterruptedException ignored) {}
-
-				System.out.println("Thread 2: Waiting for lock 1");
-				synchronized (Lock2) {
-					System.out.println("Thread 2: Holding lock 1 & 2");
-				}
+	public void unlock() {
+		synchronized (this) {
+			this.isLocked = false;
+			synchronized (monitorObject) {
+				monitorObject.notify();
 			}
 		}
 	}
 }
 
-class StarvationDemo {
-	private static Object sharedObject = new Object();
+/**
+ Reentrant lock1
+ =====================
+ If a code block enter the same lock1(monitor) again then it is called lock1's reentrance. Synchronization is
+ by default reentrant. ie.
+
+ synchronize(this){
+  count++;
+  synchronize(this){
+    count++;
+  }
+ }
+ If thread1 won first "this" lock1 then only it can hold the lock1 second time. This is called reentrance ability.
+
+ Java has bulit-in ReentrantLock class. So we don't need to implement custom reentrant Lock class.
+
+ Why use ReentrantLock class when we can just use a synchronize block:
+ -----------------------------------------------------------------------
+ With a ReentrantLock -
+
+ 1. We could configure thread fairness policy so that thread could be scheduled fairly.
+ 2. We could interrupt a thread (make forced exception to close the thread) which is waiting to acquire the lock1.
+ 3. It is possible to attempt to acquire a lock1 without being willing to wait for it forever with "tryLock()". Means, try to
+    own the lock1 and if not possible then do not wait.
+ 4. It is not limited by any "block region" like synchronization.
 
 
-	public static void main (String[] args) {
-		JFrame frame = createFrame();
-		frame.setLayout(new FlowLayout(FlowLayout.LEFT));
+ Features of ReentrantLock class: (Follow ReentrantLockTest class)
+ ------------------------------------------------------------------
+ 1. Fair lock1:
+ ~~~~~~~~~~~~~~~~
+ ReentrantLock class can be used to prevent starvation issue(we will know in next part) via it's constructor
+ i.e. new ReentrantLock(boolean isFair)
 
-		for (int i = 0; i < 5; i++) {
-			ProgressThread progressThread = new ProgressThread();
-			frame.add(progressThread.getProgressComponent());
-			progressThread.start();
-		}
+ 2. lock1()/unLock():
+ ~~~~~~~~~~~~~~~~~~~
+ This is used in place of "synchronised" keyword. We should always use unlock() in finally{..} block because if any exceptions are returned
+ from the middle of locked code then it might not execute unlock(). Hence, other threads which might be waiting will forever be waiting.
 
-		frame.setLocationRelativeTo(null);
-		frame.setVisible(true);
-	}
+ 3. wait_notify capability/newCondition():
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ We could use wait_notifier like functionality with "lock1.newCondition()" method.
+ Equivalent methods are,
+ object.wait() === condition.await()
+ object.notify()/All() === condition.signal()/All()
 
-	private static JFrame createFrame () {
-		JFrame frame = new JFrame("Starvation Demo");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(new Dimension(300, 200));
-		return frame;
-	}
+ However, like monitor object, Conditions also face "spurious wake-up" problems. See tryLockTest() method below.
+ We just handled it with a while(..) block like our WaitNotifierThree class. We could also create a separate class if we want to like the
+ WaitNotifierThree class. :)
 
-	private static class ProgressThread extends Thread {
-		JProgressBar progressBar;
-
-		ProgressThread () {
-			progressBar = new JProgressBar();
-			progressBar.setString(this.getName());
-			progressBar.setStringPainted(true);
-		}
-
-		JComponent getProgressComponent () {
-			return progressBar;
-		}
-
-		@Override
-		public void run () {
-
-			int c = 0;
-			while (true) {
-				//We are using a reentrantLock rather than Synchronized block to ensure fairness
-				synchronized (sharedObject) {
-
-					if (c == 100) {
-						break;
-					}
-					progressBar.setValue(++c);
-					try {
-						//sleep the thread to simulate long running task
-						Thread.sleep(10);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-
-				}
-			}
-		}
-	}
-}
-
-class FairnessDemo {
-	private static ReentrantLock reentrantLock = new ReentrantLock(true);
+ Checkout NestedLockTestWithRLock class.
 
 
-	public static void main (String[] args) {
-		JFrame frame = createFrame();
-		frame.setLayout(new FlowLayout(FlowLayout.LEFT));
+ 4. tryLock():
+ ~~~~~~~~~~~~~
+ Also known as - "timed and polled lock1-acquisition". It tries to acquires the lock1. If it fails to acquire the lock1 then just return
+ with boolean "false" value and do not wait for the lock1.
 
-		for (int i = 0; i < 5; i++) {
-			ProgressThread progressThread = new ProgressThread();
-			frame.add(progressThread.getProgressComponent());
-			progressThread.start();
-		}
+ Other variant: tryLock(long maximumWaitTime, TimeUnit unit), this method will wait the specified amount of time before it could own the lock1.
 
-		frame.setLocationRelativeTo(null);
-		frame.setVisible(true);
-	}
+ Usage:
+ - Where we want to wait for a specific time or immediately
+ - In deadlock(we will know in next part) prevention
+ - We could solve above nested lock1 out problem
 
-	private static JFrame createFrame () {
-		JFrame frame = new JFrame("Fairness Demo");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(new Dimension(300, 200));
-		return frame;
-	}
+ 5. lockInterruptibly():
+ ~~~~~~~~~~~~~~~~~~~~~~~~~
+ Simply, lock1.lock1() === lock1.lockInterruptibly(), both methods works for locking.
 
-	private static class ProgressThread extends Thread {
-		JProgressBar progressBar;
+ Except, if any thread call current thread's interrupt method then all the waiting thread locked via "lockInterruptibly()" will be interrupted(killed).
 
-		ProgressThread () {
-			progressBar = new JProgressBar();
-			progressBar.setString(this.getName());
-			progressBar.setStringPainted(true);
-		}
 
-		JComponent getProgressComponent () {
-			return progressBar;
-		}
+ 6. Other methods:
+ ~~~~~~~~~~~~~~~~~~~
+ - getHoldCount() : Queries the number of holds on this lock1 by the current thread
+ - isHeldByCurrentThread() : Queries if this lock1 is held by the current thread
+ - isLocked() : Queries if this lock1 is held by any thread
+ - isFair() : Checks whether if it is fair or not
 
-		@Override
-		public void run () {
+ and other similar methods.
 
-			int c = 0;
-			while (true) {
-				//We are using a reentrantLock rather than Synchronized block to ensure fairness
-				reentrantLock.lock();
-
-					if (c == 100) {
-						break;
-					}
-					progressBar.setValue(++c);
-					try {
-						//sleep the thread to simulate long running task
-						Thread.sleep(10);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-
-					reentrantLock.unlock();
-			}
-		}
-	}
-}
+ Now checkout the Part6 class. We are done!!
+ * */
 
 public class Part7 {
+	public static void main(String[] args) {
+		final int threadCount = 3;
+		final ReentrantLockTest reentrantLockTest = new ReentrantLockTest();
+
+		Runnable sharedRunnable = new Runnable() {
+			@Override public void run() {
+				try {
+					reentrantLockTest.lockUnlockTest();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		};
+
+		for (int i=0; i< threadCount; i++) {
+			new Thread(sharedRunnable).start();
+		}
+	}
+}
+
+class NestedLockTestWithRLock {
+	//we are experimenting with our above Nested lockout problem.
+	//This time ThreadB will not be locked forever. However, ThreadA will be waiting as no one will be signalling/notifying it.
+
+	public static void main(String[] args) {
+		final ReentrantLockTest lockTest = new ReentrantLockTest();
+
+		Thread threadA = new Thread(new Runnable() {
+			@Override public void run() {
+				try {
+					lockTest.nestedLockTest();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		},"Thread-A");
+
+		Thread threadB = new Thread(new Runnable() {
+			@Override public void run() {
+				try {
+					lockTest.nestedUnLockTest();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		},"Thread-B");
+
+		threadA.start();
+		threadB.start();
+	}
+}
+
+class ReentrantLockTest{
+	ReentrantLock lock1 = new ReentrantLock();
+	ReentrantLock lock2 = new ReentrantLock();
+
+	//Conditions to handle await/signal (previously: wait/notify)
+	Condition cond1 = lock1.newCondition();
+	Condition cond2 = lock2.newCondition();
+
+	private int count = 0;
+
+	public void lockUnlockTest() throws InterruptedException {
+		try {
+			lock1.lock();
+			System.out.println(Thread.currentThread().getName() + ": Lock acquired.");
+			System.out.println("Processing...");
+			for (int i = 0; i < 500; i++) {
+				count++;
+			}
+			Thread.sleep(500);
+			System.out.println("# Final value: "+ count);
+		}finally {
+			lock1.unlock();
+		}
+	}
+
+	public boolean nestedLockTest() throws InterruptedException {
+		// we are defining a stopTime
+		long stopTime = System.nanoTime() + 5000;
+		while (true) {
+			if (lock1.tryLock()) {
+				try {
+					if (lock2.tryLock()) {
+						try {
+							boolean isTrulyWaked = false; //handle spurious wake ups
+							while(!isTrulyWaked){
+								cond2.await();
+								isTrulyWaked = true;
+							}
+
+						} finally {
+							lock2.unlock();
+						}
+					}
+
+				} finally {
+					lock1.unlock();
+				}
+			}
+			if(System.nanoTime() > stopTime)
+				return false;
+
+			Thread.sleep(100);
+		}
+	}
+
+	public boolean nestedUnLockTest() throws InterruptedException {
+		// we are defining a stopTime
+		long stopTime = System.nanoTime() + 5000;
+		while (true) {
+			if (lock1.tryLock()) {
+				try {
+					if (lock2.tryLock()) {
+						try {
+								cond1.signal();
+						} finally {
+							lock2.unlock();
+						}
+					}
+
+				} finally {
+					lock1.unlock();
+				}
+			}
+			if(System.nanoTime() > stopTime){
+				System.out.println(Thread.currentThread().getName()+": I am leaving...enough waiting");
+				return false;
+			}
+
+			Thread.sleep(100);
+		}
+	}
 }

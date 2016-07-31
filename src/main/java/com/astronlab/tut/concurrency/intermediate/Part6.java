@@ -1,119 +1,106 @@
 package com.astronlab.tut.concurrency.intermediate;
 
-import java.util.Vector;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
 
-Ref:
- http://www.artima.com/insidejvm/ed2/threadsynchP.html
+ Thread class and some important methods:
+ ===========================================
+
+ Static methods:
+ -------------------
+ 1. int activeCount() : This method returns the number of active threads in the current thread's thread group.
+
+ 2. Thread currentThread() : This method returns a reference to the currently executing thread object.
+
+ 3. void dumpStack() : This method prints a stack trace of the current thread to the standard error stream.
+
+ 4.	boolean holdsLock(Object obj) : This method returns true if and only if the current thread holds the monitor lock on the specified object.
+
+ 5. boolean interrupted() : This method tests whether the current thread has been interrupted.
+
+ 6. void sleep(long millis) : This method causes the currently executing thread to sleep (temporarily cease execution) for the specified number of milliseconds, subject to the precision and accuracy of system timers and schedulers.
+
+
+ General methods:
+ -------------------
+ 1. void interrupt() : This method interrupts this thread and cause an exception.
+
+ 2. boolean isAlive() : This method tests if this thread is alive (run method is completely executed).
+
+ 3. boolean isDaemon() : This method tests if this thread is a daemon thread.
+
+ 4. boolean isInterrupted() : This method tests whether this thread has been interrupted.
+
+ 5. void join()/join(long millis) : Waits for this thread to die.
+
+ 6. void setDaemon(boolean on) : This method marks this thread as either a daemon thread(background threads) or a user thread.
+
+ 7. void setName(String name) : This method changes the name of this thread to be equal to the argument name.
+
+ 8. void setPriority(int newPriority) : This method changes the priority of this thread.
+
+
+
+ Thread's Interruption:
+ =====================================
+ If any thread is in sleeping or in waiting state (i.e. sleep() or wait() is invoked), calling the interrupt() method on the thread,
+ breaks out the sleeping or waiting state throwing InterruptedException. If the thread is not in the sleeping or waiting state,
+ calling the interrupt() method performs normal behaviour and doesn't interrupt the thread but sets the interrupt flag to true.
+
+ Lets see an example -
+
 
  */
-public class Part6 {
-}
-
-class Producer extends Thread {
-	WaitNotifier waitNotifierProducer = new WaitNotifier();
-	WaitNotifier waitNotifierConsumer = new WaitNotifier();
-
-	static final int MAXQUEUE = 5;
-	private Vector messages = new Vector();
-
-	volatile boolean isFull = false;
-
-	@Override
+public class Part6 implements Runnable {
 	public void run() {
 		try {
-			while (true) {
-				putMessage();
-				//sleep(5000);
+			System.out.println("in run() - about to work2()");
+			work2();
+			System.out.println("in run() - back from  work2()");
+		} catch (InterruptedException x) {
+			System.out.println("in run() - interrupted in work2()");
+			return;
+		}
+		System.out.println("in run() - doing stuff after nap");
+		System.out.println("in run() - leaving normally");
+	}
+
+	public void work2() throws InterruptedException {
+		while (true) {
+			if (Thread.currentThread().isInterrupted()) {
+				System.out.println(
+						"C isInterrupted()=" + Thread.currentThread().isInterrupted());
+				Thread.sleep(2000);
+				System.out.println(
+						"D isInterrupted()=" + Thread.currentThread().isInterrupted());
 			}
-		} catch (InterruptedException e) {
 		}
 	}
 
-	private void putMessage() throws InterruptedException {
-		while (messages.size() == MAXQUEUE && !isFull) {
-			isFull = true;
-			waitNotifierProducer.doWait();
-			isFull = false;
+	public void work() throws InterruptedException {
+		while (true) {
+			for (int i = 0; i < 100000; i++) {
+				int j = i * 2;
+			}
+			System.out.println(
+					"A isInterrupted()=" + Thread.currentThread().isInterrupted());
+			if (Thread.interrupted()) {
+				System.out.println(
+						"B isInterrupted()=" + Thread.currentThread().isInterrupted());
+				throw new InterruptedException();
+			}
 		}
-		messages.addElement(new java.util.Date().toString());
-		System.out.println("put message");
-		waitNotifierProducer.doNotify();
 	}
 
-	// Called by Consumer
-	public String getMessage() throws InterruptedException {
-		while (messages.size() == 0 && !isFull) {
-			waitNotifierProducer.doWait();
-		}
-		String message = (String) messages.firstElement();
-		messages.removeElement(message);
-		waitNotifierProducer.doNotify();//a msg removed so, notify now
-
-		return message;
-	}
-}
-
-class Consumer extends Thread {
-
-	Producer producer;
-
-	Consumer(Producer p) {
-		producer = p;
-	}
-
-	@Override
-	public void run() {
+	public static void main(String[] args) {
+		Part6 si = new Part6();
+		Thread t = new Thread(si);
+		t.start();
 		try {
-			while (true) {
-				String message = producer.getMessage();
-				System.out.println("Got message: " + message);
-				//sleep(200);
-			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+			Thread.sleep(2000);
+		} catch (InterruptedException x) {
 		}
-	}
-
-	public static void main(String args[]) {
-		Producer producer = new Producer();
-		producer.start();
-		new Consumer(producer).start();
-	}
-}
-
-class WaitNotifier {
-	private Object lockObject = new Object();
-	private boolean resumeSignal = false;
-
-	AtomicInteger waitCount = new AtomicInteger(0);
-
-	public void doWait() {
-		System.out.println(Thread.currentThread().getName()+"-wait - "+waitCount.get());
-		synchronized(lockObject){
-			//Changing if block into while block
-			while(!resumeSignal){
-				try{
-					lockObject.wait();
-					//If spurious wakeup happens then this following line will execute and return to while
-					//condition check. If this was truly an non-intentional/spurious call then it will
-					//find resumeSignal to be false and will return to waiting state again otherwise it will just
-					//exit the waiting state. This solves our spurious wake up issue.
-				} catch(InterruptedException e){}
-			}
-
-			resumeSignal = false;
-		}
-	}
-
-	public void doNotify() {
-		System.out.println(Thread.currentThread().getName()+"-notify - "+waitCount.incrementAndGet());
-
-		synchronized (lockObject) {
-			resumeSignal = true;
-			lockObject.notify();
-		}
+		System.out.println("in main() - interrupting other thread");
+		t.interrupt();
+		System.out.println("in main() - leaving");
 	}
 }
