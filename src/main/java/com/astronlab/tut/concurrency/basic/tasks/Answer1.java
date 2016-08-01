@@ -20,4 +20,28 @@ package com.astronlab.tut.concurrency.basic.tasks;
  *
  */
 public class Answer1 {
+	private Answer1(){
+
+	}
+
+	public static void main(String [] args) {
+
+		MyRunnable R1 = new MyRunnable();
+
+		Thread t1 = new Thread(new MyRunnable());
+		Thread t2 = new Thread(R1);
+		Thread t3 = new Thread(R1);
+
+		t1.start();
+		t2.start();
+		t3.start();
+	}
+
+}
+
+class MyRunnable implements Runnable {
+	Object a = new Object();
+	public void run() {
+		System.out.println(Thread.currentThread().getName()+"~~~~~~~"+"value: "+a);
+	}
 }
