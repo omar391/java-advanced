@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
 *Builtin Lock class:
 =========================================
- We know what lock1(also known as: intrinsic lock1) generally means(A state of monitor object to handle synchronization). But java also has built in"Lock"
+ We know what lock(also known as: intrinsic lock) generally means(A state of monitor object to handle synchronization). But java also has built in"Lock"
  interface and its implementations (ie.ReentrantLock class) to handle synchronization without using "synchronized" keyword.
 		i.e.
 
@@ -20,7 +20,7 @@ public int inc(){
 
 Lock myLock = new MyLock(); //this is just a simple custom implementation (i.e:We will use built-in ReentrantLock class, described below)
 public int inc(){
-	myLock.lock1();
+	myLock.lock();
   count++;
 	myLock.unlock();
 }
@@ -52,12 +52,12 @@ class MyLock {
  =========================================
   When we use locks/monitors in nested-ly, we need to be cautious. Consider following LockTest class-
 
- - In the lock1() method, "monitorObject.wait()" will release "monitorObject" lock1 but will continue to hold "this" lock1
+ - In the lock() method, "monitorObject.wait()" will release "monitorObject" lock but will continue to hold "this" lock
     till it could get out of wait state via monitorObject's notify from unlock() method.
 
- -  Unlock() method's synchronised block will wait for "this" lock1 however, our lock1() method will already be locked with "this".
+ -  Unlock() method's synchronised block will wait for "this" lock however, our lock() method will already be locked with "this".
 
- So in above scenario, lock1() method will be stuck forever with "this" lock1. Hence, we should always use same lock1 for wait/notify,
+ So in above scenario, lock() method will be stuck forever with "this" lock. Hence, we should always use same lock for wait/notify,
  and synchronization while trying to avoid nested locks if possible.
  */
 
@@ -87,9 +87,9 @@ class LockTest {
 }
 
 /**
- Reentrant lock1
+ Reentrant lock
  =====================
- If a code block enter the same lock1(monitor) again then it is called lock1's reentrance. Synchronization is
+ If a code block enter the same lock(monitor) again then it is called lock's reentrance. Synchronization is
  by default reentrant. ie.
 
  synchronize(this){
@@ -98,7 +98,7 @@ class LockTest {
     count++;
   }
  }
- If thread1 won first "this" lock1 then only it can hold the lock1 second time. This is called reentrance ability.
+ If thread1 won first "this" lock then only it can hold the lock second time. This is called reentrance ability.
 
  Java has bulit-in ReentrantLock class. So we don't need to implement custom reentrant Lock class.
 
@@ -107,62 +107,58 @@ class LockTest {
  With a ReentrantLock -
 
  1. We could configure thread fairness policy so that thread could be scheduled fairly.
- 2. We could interrupt a thread (make forced exception to close the thread) which is waiting to acquire the lock1.
- 3. It is possible to attempt to acquire a lock1 without being willing to wait for it forever with "tryLock()". Means, try to
-    own the lock1 and if not possible then do not wait.
+ 2. We could interrupt a thread (make forced exception to close the thread) which is waiting to acquire the lock.
+ 3. It is possible to attempt to acquire a lock without being willing to wait for it forever with "tryLock()". Means, try to
+    own the lock and if not possible then do not wait.
  4. It is not limited by any "block region" like synchronization.
 
 
  Features of ReentrantLock class: (Follow ReentrantLockTest class)
  ------------------------------------------------------------------
- 1. Fair lock1:
+ 1. Fair lock:
  ~~~~~~~~~~~~~~~~
  ReentrantLock class can be used to prevent starvation issue(we will know in next part) via it's constructor
  i.e. new ReentrantLock(boolean isFair)
 
- 2. lock1()/unLock():
+ 2. lock()/unLock():
  ~~~~~~~~~~~~~~~~~~~
  This is used in place of "synchronised" keyword. We should always use unlock() in finally{..} block because if any exceptions are returned
  from the middle of locked code then it might not execute unlock(). Hence, other threads which might be waiting will forever be waiting.
 
  3. wait_notify capability/newCondition():
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- We could use wait_notifier like functionality with "lock1.newCondition()" method.
+ We could use wait_notifier like functionality with "lock.newCondition()" method.
  Equivalent methods are,
  object.wait() === condition.await()
  object.notify()/All() === condition.signal()/All()
 
- However, like monitor object, Conditions also face "spurious wake-up" problems. See tryLockTest() method below.
+ However, like monitor object, Conditions also face "spurious wake-up" problems. Checkout NestedLockTestWithRLock class.
  We just handled it with a while(..) block like our WaitNotifierThree class. We could also create a separate class if we want to like the
  WaitNotifierThree class. :)
 
- Checkout NestedLockTestWithRLock class.
-
-
  4. tryLock():
  ~~~~~~~~~~~~~
- Also known as - "timed and polled lock1-acquisition". It tries to acquires the lock1. If it fails to acquire the lock1 then just return
- with boolean "false" value and do not wait for the lock1.
+ Also known as - "timed and polled lock-acquisition". It tries to acquires the lock. If it fails to acquire the lock then just return
+ with boolean "false" value and do not wait for the lock.
 
- Other variant: tryLock(long maximumWaitTime, TimeUnit unit), this method will wait the specified amount of time before it could own the lock1.
+ Other variant: tryLock(long maximumWaitTime, TimeUnit unit), this method will wait the specified amount of time before it could own the lock.
 
  Usage:
  - Where we want to wait for a specific time or immediately
  - In deadlock(we will know in next part) prevention
- - We could solve above nested lock1 out problem
+ - We could solve above nested lock out problem
 
  5. lockInterruptibly():
  ~~~~~~~~~~~~~~~~~~~~~~~~~
- Simply, lock1.lock1() === lock1.lockInterruptibly(), both methods works for locking.
+ Simply, lock.lock() === lock.lockInterruptibly(), both methods works for locking.
 
  Except, if any thread call current thread's interrupt method then all the waiting thread locked via "lockInterruptibly()" will be interrupted(killed).
 
-
  6. Other methods:
  ~~~~~~~~~~~~~~~~~~~
- - getHoldCount() : Queries the number of holds on this lock1 by the current thread
- - isHeldByCurrentThread() : Queries if this lock1 is held by the current thread
- - isLocked() : Queries if this lock1 is held by any thread
+ - getHoldCount() : Queries the number of holds on this lock by the current thread
+ - isHeldByCurrentThread() : Queries if this lock is held by the current thread
+ - isLocked() : Queries if this lock is held by any thread
  - isFair() : Checks whether if it is fair or not
 
  and other similar methods.
