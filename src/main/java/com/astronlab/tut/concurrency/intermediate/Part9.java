@@ -127,7 +127,7 @@ class ThreadSafeArrayList<E>
  * */
 
 class SimpleSemaphoreTest implements Runnable {
-	Semaphore semaphore = new Semaphore(5);
+	Semaphore semaphore = new Semaphore(3);
 
 	public static void main(String[] args) {
 		final int threadCount = 10;
@@ -145,10 +145,11 @@ class SimpleSemaphoreTest implements Runnable {
 	@Override public void run() {
 		boolean isPermitted = false;
 		try {
-			isPermitted = semaphore.tryAcquire(1, TimeUnit.SECONDS);
+			isPermitted = semaphore.tryAcquire(10, TimeUnit.MILLISECONDS);
 			if (isPermitted) {
 				System.out.println(Thread.currentThread().getName()+": Semaphore acquired");
 				Thread.sleep(500);
+
 			} else {
 				System.out.println("Could not acquire semaphore");
 			}

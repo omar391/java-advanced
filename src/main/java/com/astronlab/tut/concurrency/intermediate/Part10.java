@@ -42,7 +42,7 @@ import java.util.concurrent.CountDownLatch;
 
  Amdahl's Law:
  ========================================
- Amdahl's law can be used to calculate how much a computation can be sped up by running part of it in parallel. Amdahl's law is named after
+ Amdahl's law can be used to calculate how much a computation can be speed up by running part of it in parallel. Amdahl's law is named after
  Gene Amdahl who presented the law in 1967. The law is as follows:
 
  Total execution time = Total time of serial execution + Total time of parallel/concurrent execution
@@ -63,20 +63,21 @@ import java.util.concurrent.CountDownLatch;
 */
 
 class SimpleCountDownLatchExample {
-	static int N = 5;
+	static int N = 4;
 
-	void main() throws InterruptedException {
+	public static void main(String args[]) throws InterruptedException {
 		CountDownLatch doneSignal = new CountDownLatch(N);
 
 		for (int i = 0; i < N; ++i) // create and start threads
 		{
-			new Thread(new WorkerRunnable(doneSignal)).start();
+			new Thread(new SimpleCountDownLatchExample().new WorkerRunnable(doneSignal)).start();
 		}
 
 		doneSignal.await();           // wait for all to finish
+		System.out.println("finished");
 	}
 
-	class WorkerRunnable implements Runnable {
+	 class WorkerRunnable implements Runnable {
 		private final CountDownLatch doneSignal;
 
 		WorkerRunnable(CountDownLatch doneSignal) {
@@ -92,6 +93,7 @@ class SimpleCountDownLatchExample {
 		}
 
 		void doWork() {
+			System.out.println(Thread.currentThread().getName()+"------ Working");
 		}
 	}
 }
