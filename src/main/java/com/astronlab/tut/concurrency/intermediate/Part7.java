@@ -282,7 +282,7 @@ class ReentrantLockTest{
 				try {
 					if (lock2.tryLock()) {
 						try {
-								cond1.signal();
+								cond2.signal();
 						} finally {
 							lock2.unlock();
 						}
