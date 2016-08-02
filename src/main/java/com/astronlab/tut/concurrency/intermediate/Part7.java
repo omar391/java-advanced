@@ -224,8 +224,8 @@ class ReentrantLockTest{
 	ReentrantLock lock2 = new ReentrantLock();
 
 	//Conditions to handle await/signal (previously: wait/notify)
-	Condition cond1 = lock1.newCondition();
-	Condition cond2 = lock2.newCondition();
+	SafeCondition cond1 = new SafeCondition(lock1.newCondition());
+	SafeCondition cond2 = new SafeCondition(lock2.newCondition());
 
 	private int count = 0;
 
@@ -252,12 +252,7 @@ class ReentrantLockTest{
 				try {
 					if (lock2.tryLock()) {
 						try {
-							boolean isTrulyWaked = false; //handle spurious wake ups
-							while(!isTrulyWaked){
 								cond2.await();
-								isTrulyWaked = true;
-							}
-
 						} finally {
 							lock2.unlock();
 						}
@@ -300,4 +295,29 @@ class ReentrantLockTest{
 			Thread.sleep(100);
 		}
 	}
+}
+
+class SafeCondition{
+	private final Condition condition;
+	private boolean resumeSignal = false;
+
+	public SafeCondition(Condition condition){
+		this.condition = condition;
+	}
+
+	public synchronized void await() {
+			while (!resumeSignal) {
+				try {
+					condition.await();
+				} catch (InterruptedException e) {
+				}
+			}
+			resumeSignal = false;
+	}
+
+	public synchronized void signal() {
+			resumeSignal = true;
+			condition.signal();
+	}
+
 }
