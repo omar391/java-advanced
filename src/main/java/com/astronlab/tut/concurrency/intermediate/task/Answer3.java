@@ -22,12 +22,18 @@ public class Answer3 {
             while (i< 5) {
                 try {
                     if (lock1.tryLock()) {
-                        System.out.println("Thread 1: Holding lock1");
+                        System.out.println("Thread 1- "+i+"th itr: owned lock1");
+                        Thread.sleep(2000);
                         if (lock2.tryLock()) {
-                            System.out.println("Thread 1: holding lock2");
+                            System.out.println("Thread 1- "+i+"th itr: owned lock2\n");
+                        }else{
+                            System.out.println("Thread 1- "+i+"th itr: owned lock1 but Failed to own lock2\n");
                         }
-                        System.out.println("Thread 1: holding lock1 & lock2");
+                    }else{
+                        System.out.println("Thread 1- "+i+"th itr: Failed to owned lock1\n");
                     }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 } finally {
                     if(lock2.isHeldByCurrentThread()) {  //checking for: if current thread locks the lock then it unlocks.
                         lock2.unlock();
@@ -47,14 +53,15 @@ public class Answer3 {
             while(i<5){
                 try{
                     if(lock2.tryLock()){
-                        System.out.println("Thread 2: Holding lock2");
+                        System.out.println("Thread 2- "+i+"th itr: owned lock2");
                         if(lock1.tryLock()){
-                            System.out.println("Thread 2: Holding lock1");
-
+                            System.out.println("Thread 2- "+i+"th itr: owned lock1 & lock2");
+                        }else{
+                            System.out.println("Thread 2- "+i+"th itr: owned lock2 but Failed to own lock1\n");
                         }
-                        System.out.println("Thread 2: Holding lock1 & lock2");
+                    }else{
+                        System.out.println("Thread 2- "+i+"th itr: Failed to owned lock2\n");
                     }
-
                 }finally {
                     if(lock1.isHeldByCurrentThread()) {
                         lock1.unlock();

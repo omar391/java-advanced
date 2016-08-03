@@ -224,8 +224,8 @@ class ReentrantLockTest{
 	ReentrantLock lock2 = new ReentrantLock();
 
 	//Conditions to handle await/signal (previously: wait/notify)
-	SafeCondition cond1 = new SafeCondition(lock1.newCondition());
-	SafeCondition cond2 = new SafeCondition(lock2.newCondition());
+	SafeCondition cond1 = new SafeCondition(lock1);
+	SafeCondition cond2 = new SafeCondition(lock2);
 
 	private int count = 0;
 
@@ -297,15 +297,19 @@ class ReentrantLockTest{
 	}
 }
 
-class SafeCondition{
+class SafeCondition {
 	private final Condition condition;
+	private final ReentrantLock lock;
 	private boolean resumeSignal = false;
 
-	public SafeCondition(Condition condition){
-		this.condition = condition;
+	public SafeCondition(ReentrantLock lock) {
+		this.lock = lock;
+		this.condition = lock.newCondition();
 	}
 
-	public synchronized void await() {
+	public void await() {
+		try {
+			lock.lock();
 			while (!resumeSignal) {
 				try {
 					condition.await();
@@ -313,11 +317,18 @@ class SafeCondition{
 				}
 			}
 			resumeSignal = false;
+		} finally {
+			lock.unlock();
+		}
 	}
 
-	public synchronized void signal() {
+	public void signal() {
+		try {
+			lock.lock();
 			resumeSignal = true;
 			condition.signal();
+		} finally {
+			lock.unlock();
+		}
 	}
-
 }

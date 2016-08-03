@@ -8,74 +8,75 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Created by arjuda on 8/3/16.
  */
-public class Answer2 {
+public class Answer2_v1 {
 
 	/**
-	 * 3. Example a deadlock prevention class via ReentrantLock's tryLock() methods.
+	 2. Solve our consume-producer problem of Question5/Basic_part via ReentrantLock class.
 	 */
+
+	//Done via: 1 ReentrantLock lock and 2 conditions
 }
 
 class Producer extends Thread {
-
-	ReentrantLock lock1 = new ReentrantLock();
-	ReentrantLock lock2 = new ReentrantLock();
+	ReentrantLock lock = new ReentrantLock();
 
 	//Conditions to handle await/signal (previously: wait/notify)
-	SafeCondition prodCond = new SafeCondition(lock1.newCondition());
-  SafeCondition consumerCond = new SafeCondition(lock1.newCondition());
+	SafeCondition prodCond = new SafeCondition(lock);
+	SafeCondition consumerCond = new SafeCondition(lock);
 
 	static final int MAXQUEUE = 5;
-	AtomicInteger msgCount = new AtomicInteger(0);//Using atomic count for better vector size counting
+	//Using atomic count for better vector size counting
+	AtomicInteger msgCount = new AtomicInteger(0);
 	private Vector messages = new Vector();
 
-	@Override
-	public void run() {
+	@Override public void run() {
 		try {
 			while (true) {
 				putMessage();
-				//sleep(5000);
+				//sleep(500);
 			}
 		} catch (InterruptedException e) {
 		}
 	}
 
 	private void putMessage() throws InterruptedException {
+		lock.lock();
 		while (msgCount.get() == MAXQUEUE) {
-			//waitNotifierProducer.doWait();//moving into waiting state
 			prodCond.await();
 		}
 		messages.addElement(new java.util.Date().toString());
 		System.out.println("put message");
 		msgCount.incrementAndGet();
-		//waitNotifierConsumer.doNotify();
 		consumerCond.signal();
+		lock.unlock();
 	}
 
 	// Called by Consumer
-	public String getMessage() throws InterruptedException {
+	String getMessage() throws InterruptedException {
+		lock.lock();
 		while (msgCount.get() == 0) {
-			//waitNotifierConsumer.doWait();//moving into waiting state
+			//moving into waiting state
 			consumerCond.await();
 		}
 		String message = (String) messages.firstElement();
 		messages.removeElement(message);
 		msgCount.decrementAndGet();
-		//waitNotifierProducer.doNotify();//a msg removed so, notify now
+		//a msg removed so, notify now
 		prodCond.signal();
+		lock.unlock();
 
 		return message;
 	}
 }
 
 class Consumer extends Thread {
-	Producer producer;
+	private Producer producer;
 
 	Consumer(Producer p) {
 		producer = p;
 	}
 
-	@Override
-	public void run() {
+	@Override public void run() {
 		try {
 			while (true) {
 				String message = producer.getMessage();
@@ -89,32 +90,49 @@ class Consumer extends Thread {
 
 	public static void main(String args[]) {
 		Producer producer = new Producer();
+		producer.setName("Producer");
 		producer.start();
-		new Consumer(producer).start();
+
+		Thread consumer = new Consumer(producer);
+		consumer.setName("Consumer");
+		consumer.start();
 	}
 }
 
-class SafeCondition{
+class SafeCondition {
 	private final Condition condition;
+	private final ReentrantLock lock;
 	private boolean resumeSignal = false;
 
-	public SafeCondition(Condition condition){
-		this.condition = condition;
+	public SafeCondition(ReentrantLock lock) {
+		this.lock = lock;
+		this.condition = lock.newCondition();
 	}
 
-	public synchronized void await() {
-		while (!resumeSignal) {
-			try {
-				condition.await();
-			} catch (InterruptedException e) {
+	public void await() {
+		try {
+			lock.lock();
+			while (!resumeSignal) {
+				//System.out.println("Waiting via: " + Thread.currentThread().getName());
+				try {
+					condition.await();
+				} catch (InterruptedException e) {
+				}
 			}
+			resumeSignal = false;
+		} finally {
+			lock.unlock();
 		}
-		resumeSignal = false;
 	}
 
-	public synchronized void signal() {
-		resumeSignal = true;
-		condition.signal();
+	public void signal() {
+		try {
+			lock.lock();
+			//System.out.println("Signalled via: " + Thread.currentThread().getName());
+			resumeSignal = true;
+			condition.signal();
+		} finally {
+			lock.unlock();
+		}
 	}
-
 }
