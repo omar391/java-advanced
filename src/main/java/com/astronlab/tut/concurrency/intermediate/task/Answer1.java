@@ -16,7 +16,7 @@ public final class Answer1 implements Runnable {
 			count++;
 			System.out.println("value:" + count);
 			if (Thread.interrupted()) {
-				System.out.println("Thread Interrupted at------------------" + count);
+				System.out.println("Thread Interrupted at----------------" + count);
 				throw new InterruptedException();
 			}
 		}
