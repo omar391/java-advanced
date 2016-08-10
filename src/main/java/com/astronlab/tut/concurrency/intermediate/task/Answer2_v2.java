@@ -31,8 +31,7 @@ public class Answer2_v2 {
 		ReentrantLock lock1 = new ReentrantLock();
 
 		//Conditions to handle await/signal (previously: wait/notify)
-		SafeCondition prodCond = new SafeCondition(lock1);
-		SafeCondition consumerCond = new SafeCondition(lock1);
+		SafeCondition condition = new SafeCondition(lock1);
 
 		static final int MAXQUEUE = 5;
 		//Using atomic count for better vector size counting
@@ -52,13 +51,13 @@ public class Answer2_v2 {
 		private void putMessage() throws InterruptedException {
 			lock1.lock();
 			while (msgCount.get() == MAXQUEUE) {
-				//waitNotifierProducer.doWait();//moving into waiting state
-				prodCond.await();
+				//condition.signal();//signal consumer
+				condition.await();
 			}
 			messages.addElement(new java.util.Date().toString());
-			System.out.println("put message");
 			msgCount.incrementAndGet();
-			consumerCond.signal();
+			System.out.println("put message - "+msgCount.get());
+			condition.signal();//con
 			lock1.unlock();
 		}
 
@@ -66,14 +65,15 @@ public class Answer2_v2 {
 		public String getMessage() throws InterruptedException {
 			lock1.lock();
 			while (msgCount.get() == 0) {
-				//waitNotifierConsumer.doWait();//moving into waiting state
-				consumerCond.await();
+				condition.await();//con
+				System.out.println(msgCount.get());
 			}
+			msgCount.decrementAndGet();
 			String message = (String) messages.firstElement();
 			messages.removeElement(message);
-			msgCount.decrementAndGet();
+			message += " - "+msgCount.get();
 			//waitNotifierProducer.doNotify();//a msg removed so, notify now
-			prodCond.signal();
+			condition.signal();
 			lock1.unlock();
 
 			return message;
@@ -104,6 +104,7 @@ public class Answer2_v2 {
 		private final Condition condition;
 		private final ReentrantLock lock;
 		private boolean resumeSignal = false;
+		private AtomicInteger counter = new AtomicInteger(0);
 
 		public SafeCondition(ReentrantLock lock) {
 			this.lock = lock;
@@ -114,7 +115,7 @@ public class Answer2_v2 {
 			try {
 				lock.lock();
 				while (!resumeSignal) {
-					//System.out.println("Waiting via: " + Thread.currentThread().getName());
+					System.out.println(counter.incrementAndGet()+" -Waiting via: " + Thread.currentThread().getName());
 					try {
 						condition.await();
 					} catch (InterruptedException e) {
@@ -129,7 +130,7 @@ public class Answer2_v2 {
 		public void signal() {
 			try {
 				lock.lock();
-				//System.out.println("Signalled via: " + Thread.currentThread().getName());
+				System.out.println(counter.incrementAndGet()+" -Signalled via: " + Thread.currentThread().getName());
 				resumeSignal = true;
 				condition.signal();
 			} finally {
