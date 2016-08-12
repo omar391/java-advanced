@@ -8,7 +8,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Created by arjuda on 8/3/16.
  */
-public class Answer2_v1 {
+public class Answer2 {
 
 	/**
 	 2. Solve our consume-producer problem of Question5/Basic_part via ReentrantLock class.
@@ -18,15 +18,15 @@ public class Answer2_v1 {
 }
 
 class Producer extends Thread {
-	ReentrantLock lock = new ReentrantLock();
+	private ReentrantLock lock = new ReentrantLock();
 
 	//Conditions to handle await/signal (previously: wait/notify)
-	SafeCondition prodCond = new SafeCondition(lock);
-	SafeCondition consumerCond = new SafeCondition(lock);
+	private SafeCondition prodCond = new SafeCondition(lock);
+	private SafeCondition consumerCond = new SafeCondition(lock);
 
-	static final int MAXQUEUE = 5;
+	private static final int MAXQUEUE = 5;
 	//Using atomic count for better vector size counting
-	AtomicInteger msgCount = new AtomicInteger(0);
+	private AtomicInteger msgCount = new AtomicInteger(0);
 	private Vector messages = new Vector();
 
 	@Override public void run() {
@@ -40,30 +40,39 @@ class Producer extends Thread {
 	}
 
 	private void putMessage() throws InterruptedException {
-		lock.lock();
-		while (msgCount.get() == MAXQUEUE) {
-			prodCond.await();
+		try {
+			lock.lock();
+			while (msgCount.get() == MAXQUEUE) {
+				prodCond.await();
+			}
+			messages.addElement(new java.util.Date().toString());
+			System.out.println("put message");
+			msgCount.incrementAndGet();
+			consumerCond.signal();
+
+		} finally {
+			lock.unlock();
 		}
-		messages.addElement(new java.util.Date().toString());
-		System.out.println("put message");
-		msgCount.incrementAndGet();
-		consumerCond.signal();
-		lock.unlock();
 	}
 
 	// Called by Consumer
 	String getMessage() throws InterruptedException {
-		lock.lock();
-		while (msgCount.get() == 0) {
-			//moving into waiting state
-			consumerCond.await();
+		String message = null;
+		try {
+			lock.lock();
+			while (msgCount.get() == 0) {
+				//moving into waiting state
+				consumerCond.await();
+			}
+			message = (String) messages.firstElement();
+			messages.removeElement(message);
+			msgCount.decrementAndGet();
+			//a msg removed so, notify now
+			prodCond.signal();
+
+		} finally {
+			lock.unlock();
 		}
-		String message = (String) messages.firstElement();
-		messages.removeElement(message);
-		msgCount.decrementAndGet();
-		//a msg removed so, notify now
-		prodCond.signal();
-		lock.unlock();
 
 		return message;
 	}
@@ -72,7 +81,7 @@ class Producer extends Thread {
 class Consumer extends Thread {
 	private Producer producer;
 
-	Consumer(Producer p) {
+	private Consumer(Producer p) {
 		producer = p;
 	}
 
