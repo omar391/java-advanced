@@ -10,5 +10,6 @@ repositories {
 }
 
 dependencies {
-    //compile 'org.mapdb:mapdb:3.0.0-M3'
+    compile 'org.codehaus.groovy:groovy-all:2.3.11'
+    compile 'com.squareup.okhttp3:okhttp:3.2.0'
 }
