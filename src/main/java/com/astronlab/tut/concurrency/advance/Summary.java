@@ -17,14 +17,14 @@ package com.astronlab.tut.concurrency.advance;
 
  Synchronised block/methods vs Reentrant Lock
  ==============================================
- 1. In most of the case we could use plain synchronised block
- 2. But if we need to sort out deadlock, wait-notify , fairness in thread scheduling
+ 1. In most of the cases we could use plain synchronised block
+ 2. But if we need to sort out deadlock, wait-notify, fairness in thread scheduling
     then we will use Reentrant lock instead
 
 
  Synchronised block/methods vs Atomic variable/reference
  =========================================================
- 1. If we have opportunity to use atomic variable the we will
+ 1. If we have opportunity to use atomic variable then we will
     use Atomic variable/references instead of synchronised block
 
 
@@ -49,10 +49,9 @@ package com.astronlab.tut.concurrency.advance;
 
 
  ConcurrentMap vs HashMap
- =========================
+ ===========================
  1. We will use ConcurrentMap in multi threaded context
  2. HashMap should be used in single-threaded/immutable context
 
  * */
-public class Summery {
-}
+public class Summary {}
