@@ -5,13 +5,10 @@ import com.astronlab.tut.utils.TimeAnalyzer;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 /**
-	Executor service and Thread pool
+	Executor service and Thread pool:
  =========================================
  Up until now, we were using raw/low-level "Thread" class and it's "start" method to start and execute a
  runnable tasks. However, in production scenarios we will use high-level "Executor" class to
@@ -116,6 +113,57 @@ import java.util.concurrent.Future;
 
  Checkout our Part12 class for all these implementations!
 
+
+ Fork/Join Framework / ForkJoinPool:
+ ======================================
+ Included in JAVA-7, this framework/thread-pool is specially used for "Recursive/divide-conquer" type tasks.
+ However, in general situations - instead of ThreadPoolExecutor we could also use ForkJoinExecutor.
+ ie.
+
+ ExecutorService eService =  Executors.newWorkStealingPool(); //In this case, default no of threads is equivalent to no of processors
+ eService.submit(Runnable/Callable); //everything else are similar to those of ThreadPoolExecutor
+
+
+ Proper way to wait for ExecutorService to finish its task queue:
+ ==================================================================
+ 1. If number of task/callable/runnable is known + wait till task completely finishes, use any one of the following -
+	 - future.get()
+	 - executorService.invokeAll()
+	 - CountDownLatch (checkout Part10)
+
+ 2. If number of task is known + wait gracefully with a time-out in case of deadlock scenarios.
+    So, you wouldn't have to wait forever.
+
+   es.shutdown();
+	 es.awaitTermination(long timeout, TimeUnit unit);
+
+ 3. If number of task is not known before hand (ie. dynamic task submission)
+	 - use Phaser class (Checkout Part10)
+
+
+ Threads factory:
+ ========================
+ If we want to change the name/priority/daemon or other attributes of threads used in ExecutorService then
+ we need to use a custom ThreadFactory class.
+ ie.
+
+ // We could create a sub class by implementing ThreadFactory interface
+
+ ThreadFactory factory = new ThreadFactory() { //We used Anonymous class for simpler demonstration
+    int count = 0;
+    public Thread newThread(Runnable r) {
+			 Thread t = Executors.defaultThreadFactory().newThread(r);
+			 t.setName("my_thread-"+count);
+       t.setPriority(5);
+			 t.setDaemon(true);
+	     count++;
+			 return t;
+	 }
+ };
+
+ ExecutorService exec = Executors.newFixedThreadPool(4, factory);
+ exec.submit(runnable/callable);
+
  */
 public class Part12 {
 
@@ -142,7 +190,7 @@ public class Part12 {
 		//execute all callable-s and wait for the result
 		List<Future<String>> results = executor.invokeAll(callableList);
 
-		//Now print the result
+		//Now print the result (optional)
 		for(Future future: results){
 			System.out.println(future.get());
 		}
@@ -153,7 +201,7 @@ public class Part12 {
 		timeAnalyzer.analyze();
 	}
 
-	static class WebResponseChecker implements Callable<String>{
+	private static class WebResponseChecker implements Callable<String>{
 		HttpInvoker httpInvoker;
 
 		WebResponseChecker(String url) throws Exception {

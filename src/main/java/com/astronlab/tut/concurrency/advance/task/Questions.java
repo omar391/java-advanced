@@ -19,6 +19,11 @@ public class Questions {
 
 		3. Collect all the data from the urls in Part12 and write those data in files separately. File operations must be done in separate threads.
 
+		4. Grand finale: Final task
+		- Make a copy of HttpInvoker class and transform it into a thread safe http class
+		(do all required R&Ds first + checkout other thread safe HttpInvoker implementations)
+		- Use a single instance of our thread safe invoker class to solve question #3.
+		- For task's completion waiting, use Phaser class.
 
 * */
 }

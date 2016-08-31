@@ -3,7 +3,7 @@ apply plugin: 'java'
 group 'com.astronlab.tut'
 version '1.0-SNAPSHOT'
 
-sourceCompatibility = 1.7
+sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()

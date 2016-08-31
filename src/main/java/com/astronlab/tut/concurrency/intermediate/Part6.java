@@ -39,6 +39,21 @@ package com.astronlab.tut.concurrency.intermediate;
  8. void setPriority(int newPriority) : This method changes the priority of this thread.
 
 
+ User/Worker threads vs Daemon/background threads:
+ ===================================================
+ All threads are worker/user threads unless we specify a thread as a daemon thread.
+ ie.
+ Thread t = new Thread();
+ t.setDaemon(true);
+
+ Facts on daemon threads:
+ -------------------------
+ - It is a low priority thread than main/user/worker threads
+ - When the only threads left running in your app are of Daemon status, the process closes, it doesn't wait
+ - Thread created by daemon threads are also of daemon threads status
+ - A thread’s status could be changed into Daemon when it doesn't perform critical operations (database/io etc)
+   so that it could end as soon as process's lifecycle ends and resources could be released
+
 
  Thread's Interruption:
  =====================================

@@ -17,7 +17,6 @@ import java.util.concurrent.Future;
 
  */
 public class Answer3 {
-
 	private static List<String> urls = new ArrayList<>();
 	private static ExecutorService executor = Executors.newFixedThreadPool(8);
 
@@ -46,16 +45,15 @@ public class Answer3 {
 			for (String url : urls) {
 				future =  executor.submit(new WebResponseChecker(url));
 				futureList1.add(future);
-
 			}
 
 			List<Future> futureList2 = new ArrayList<>();
 			for (Future f : futureList1) {
 				future = executor.submit(new FileWritter((List)f.get()));
 				futureList2.add(future);
-
 			}
 
+			//wait for file callable's set
 			for(Future f : futureList2){
 				f.get();
 			}
@@ -66,12 +64,10 @@ public class Answer3 {
 
 	static class FileWritter implements Callable<String>{
 		String fileText,fileName;
-		File file;
 
 		FileWritter(List<String> inputArr){
 			fileText = inputArr.get(0);
 			fileName = inputArr.get(1).replaceAll("^.*?//","").replaceAll("[/\\.]","_");
-
 		}
 
 		@Override public String call() throws Exception {
@@ -97,6 +93,7 @@ public class Answer3 {
 			String result = httpInvoker.getStringData();
       resultArr.add(result);
 			resultArr.add(httpInvoker.getUrl());
+
 			//release http resource
 			httpInvoker.closeNReleaseResource();
 
@@ -104,4 +101,3 @@ public class Answer3 {
 		}
 	}
 }
-

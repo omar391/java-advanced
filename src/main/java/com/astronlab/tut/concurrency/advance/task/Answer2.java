@@ -41,8 +41,7 @@ public class Answer2 {
 
 		Long t1 = (eDate1.getTime() - sDate1.getTime()) / 1000;
 
-		System.out.println(
-				"executor service class:" + (t1 - t) + " S faster than non executor service class");
+		System.out.println("\nThread-pool implementation is: " + (t1 - t) + " seconds faster");
 	}
 
 	static class InvokeClassWithThreadPool {

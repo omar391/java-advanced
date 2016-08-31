@@ -14,11 +14,12 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Answer1 {
 	public static void main(String[] args) {
 		ExecutorService executorService = Executors.newFixedThreadPool(2);
-		Producer producer = new Producer();
-		executorService.submit(producer);
-		Consumer consumer = new Consumer(producer);
-		executorService.submit(consumer);
 
+		Producer producer = new Producer();
+		Consumer consumer = new Consumer(producer);
+
+		executorService.submit(producer);
+		executorService.submit(consumer);
 	}
 
 	static class Producer implements Callable {
