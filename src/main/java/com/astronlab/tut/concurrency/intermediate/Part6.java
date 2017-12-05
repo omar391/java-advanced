@@ -84,7 +84,7 @@ public class Part6 implements Runnable {
 			if (Thread.currentThread().isInterrupted()) {
 				System.out.println(
 						"C isInterrupted()=" + Thread.currentThread().isInterrupted());
-				Thread.sleep(2000);
+				Thread.sleep(500);
 				System.out.println(
 						"D isInterrupted()=" + Thread.currentThread().isInterrupted());
 			}

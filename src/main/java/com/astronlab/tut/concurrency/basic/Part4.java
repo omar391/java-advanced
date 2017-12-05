@@ -73,6 +73,21 @@ Thus, even if two threads are executing the codes with shared reference to a Thr
 then the two threads can not see the value of each other's ThreadLocal variables.
 
 Syntax: private ThreadLocal myThreadLocal = new ThreadLocal();
+
+
+"happens-before" relationship
+=================================
+Java Memory Model provides some guarantee on which changes made by one thread should be visible to others, one of them
+is happens-before relationship. This relationship defines several rules which allows programmers to anticipate and reason
+behaviour of concurrent Java programs. For example, happens-before relationship guarantees :
+
+- Each action in a thread happens-before every action in that thread that comes later in the program order, this is known as program order rule.
+- An unlock on a monitor lock happens-before every subsequent lock on that same monitor lock, also known as Monitor lock rule.
+- A write to a volatile field happens-before every subsequent read of that same field, known as Volatile variable rule.
+- A call to Thread.start on a thread happens-before any other thread detects that thread has terminated, either by successfully return from Thread.join() or by Thread.isAlive() returning false, also known as Thread start rule.
+- A thread calling interrupt on another thread happens-before the interrupted thread detects the interrupt( either by having InterruptedException thrown, or invoking isInterrupted or interrupted), popularly known as Thread Interruption rule.
+- The end of a constructor for an object happens-before the start of the finalizer for that object, known as Finalizer rule.
+- If A happens-before B, and B happens-before C, then A happens-before C, which means happens-before guarantees Transitivity.
  */
 public class Part4 {
 }

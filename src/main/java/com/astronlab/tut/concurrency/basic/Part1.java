@@ -31,7 +31,7 @@ Concurrency vs. Parallelism
 	Concurrency means that an application is making progress on more than one task at the same time (concurrently).
 	Parallelism on the other hand, is related to how an application handles each individual task. An application may process the task serially from start to end, or split the task up into subtasks which can be completed in parallel.
 
-	As you can see, an application can be concurrent, but not parallel. This means that it processes more than one task at the cognate time, but the tasks are not broken down into subtasks.
+	As you can see, if an application is concurrent, but not parallel that means it can processes more than one task at the cognate time, but the tasks are not broken down into subtasks.
 	An application can also be parallel but not concurrent. This means that the application only works on one task at a time, and this task is broken down into subtasks which can be processed in parallel.
 
 	Additionally, an application can be neither concurrent nor parallel. This means that it works on only one task at a time, and the task is never broken down into subtasks for parallel execution.
